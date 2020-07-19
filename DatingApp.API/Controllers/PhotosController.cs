@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -14,7 +15,6 @@ using Microsoft.Extensions.Options;
 
 namespace DatingApp.API.Controllers
 {
-    [Authorize]
     [Route("api/users/{userId}/photos")]
     public class PhotosController : ControllerBase
     {
@@ -47,7 +47,7 @@ namespace DatingApp.API.Controllers
 
             return Ok(photo);
         }
-
+        
         [HttpPost]
         public async Task<IActionResult> AddPhotoForUser(int userId,
             [FromForm] PhotoForCreationDto photoForCreationDto)
@@ -55,7 +55,7 @@ namespace DatingApp.API.Controllers
             if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-            var userFromRepo = await _repo.GetUser(userId);
+            var userFromRepo = await _repo.GetUser(userId, true);
 
             var file = photoForCreationDto.File;
 
@@ -82,7 +82,8 @@ namespace DatingApp.API.Controllers
 
             if (!userFromRepo.Photos.Any(u => u.IsMain))
                 photo.IsMain = true;
-
+            
+            photo.IsApproved = false;
             userFromRepo.Photos.Add(photo);
 
             if (await _repo.SaveAll())
@@ -99,7 +100,7 @@ namespace DatingApp.API.Controllers
             if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-            var user = await _repo.GetUser(userId);
+            var user = await _repo.GetUser(userId, true);
             if (!user.Photos.Any(p => p.Id == id))
                 return Unauthorized();
 
@@ -125,7 +126,7 @@ namespace DatingApp.API.Controllers
             if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-            var user = await _repo.GetUser(userId);
+            var user = await _repo.GetUser(userId, true);
             if (!user.Photos.Any(p => p.Id == id))
                 return Unauthorized();
 
@@ -157,5 +158,6 @@ namespace DatingApp.API.Controllers
             return BadRequest("Failed to delete the photo");
         }
 
+       
     }
 }
